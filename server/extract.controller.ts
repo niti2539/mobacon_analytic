@@ -1,6 +1,7 @@
 
 import { Router, Request, Response } from 'express';
-
+import { findString } from './string-helper';
+import XRegExp from 'xregexp';
 
 const router: Router = Router();
 
@@ -11,13 +12,16 @@ router.post('/softbank/:correlationid', (req: any, res) => {
     const html: string = req.rawBody;
 
     // basic usage
-    const pattern = /<em>基本料(.*?)<\s*\/\s*table>/g;
+    const buContent = findString(html, '<em>基本料', '</table');
+    const a = buContent.split(/<tr>(.*?)<\/tr>/g);
+    // const reg = XRegExp('<tr>(?<body>.*?)</tr>', 'gs');
+    // const a = reg.exec(`
+    // <tr>1</tr>
 
-    // ยังพังอยู่เรื่องภาษาญี่ปุ่น
-    const match = pattern.exec(html)
+    // <tr>2</tr>`);
 
 
-    res.json({ 'status': 'OK' });
+    res.json();
 });
 
 router.post('/docomo/:correlationid', (req: any, res) => {

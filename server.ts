@@ -2,6 +2,7 @@ import express from 'express';
 import bodyParser from 'body-parser';
 
 import { ExtractController } from './server/extract.controller';
+import { UsageController } from './server/usage.controller';
 
 
 const app: express.Application = express();
@@ -24,6 +25,7 @@ app.use(xmlParser);
 app.use(bodyParser.json());
 
 app.use('/api/extract', ExtractController);
+app.use('/api/usage', UsageController);
 
 
 app.listen(port, () => {
