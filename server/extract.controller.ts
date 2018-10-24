@@ -1,7 +1,6 @@
 
 import { Router, Request, Response } from 'express';
 import { findString } from './string-helper';
-import XRegExp from 'xregexp';
 
 const router: Router = Router();
 
@@ -11,17 +10,37 @@ router.post('/softbank/:correlationid', (req: any, res) => {
 
     const html: string = req.rawBody;
 
+    const extract: any = {};
+
     // basic usage
     const buContent = findString(html, '<em>基本料', '</table');
-    const a = buContent.split(/<tr>(.*?)<\/tr>/g);
-    // const reg = XRegExp('<tr>(?<body>.*?)</tr>', 'gs');
-    // const a = reg.exec(`
-    // <tr>1</tr>
+    const items: any = [];
+    let item: any = {};
+    buContent.split(/\n/).forEach(line => {
+        const key = /<td>(.*?)<\/td>/.exec(line);
+        if (key)
+            item.key = key[1].trim();
+        else {
+            let value = /<td(.*?)><span>(.*?)<\/span>/.exec(line);
+            if (value) {
+                item.value = value[2].trim();
+                items.push(item);
+                item = {};
+            } else {
+                value = /<td(.*?)>([+-]?\$?[1-9]\d?(?:,*\d{3})*(?:\.\d{2})?)/.exec(line);
+                if (value) {
+                    item.value = value[2].trim();
+                    items.push(item);
+                    item = {};
+                }
+            }
+        }
+    });
 
-    // <tr>2</tr>`);
+    extract.basicUsage = items;
 
 
-    res.json();
+    res.json(extract);
 });
 
 router.post('/docomo/:correlationid', (req: any, res) => {
