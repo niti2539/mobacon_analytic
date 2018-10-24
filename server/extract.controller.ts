@@ -14,7 +14,7 @@ router.post('/softbank/:correlationid', (req: any, res) => {
 
     // basic usage
     const buContent = findString(html, '<em>基本料', '</table');
-    const items: any = [];
+    let items: any = [];
     let item: any = {};
     buContent.split(/\n/).forEach(line => {
         const key = /<td>(.*?)<\/td>/.exec(line);
@@ -36,8 +36,34 @@ router.post('/softbank/:correlationid', (req: any, res) => {
             }
         }
     });
-
     extract.basicUsage = items;
+
+    // communication fee
+    const comFeeContent = findString(html, '<em>通信料', '</table');
+    items = [];
+    item = {};
+    comFeeContent.split(/\n/).forEach(line => {
+        const key = /<td>(.*?)<\/td>/.exec(line);
+        if (key)
+            item.key = key[1].trim();
+        else {
+            let value = /<td(.*?)><span>(.*?)<\/span>/.exec(line);
+            if (value) {
+                item.value = value[2].trim();
+                items.push(item);
+                item = {};
+            } else {
+                value = /<td(.*?)>([+-]?\$?[1-9]\d?(?:,*\d{3})*(?:\.\d{2})?)/.exec(line);
+                if (value) {
+                    item.value = value[2].trim();
+                    items.push(item);
+                    item = {};
+                }
+            }
+        }
+    });
+    extract.communicationFee = items;
+
 
 
     res.json(extract);
