@@ -7,8 +7,22 @@ import { ExtractController } from './server/extract.controller';
 const app: express.Application = express();
 const port: any = process.env.PORT || 3000;
 
+function xmlParser(req: any, res: any, next: any) {
+    let data = '';
+    req.setEncoding('utf8');
+    req.on('data', function (chunk: any) {
+        data += chunk;
+    });
+    req.on('end', function () {
+        req.rawBody = data;
+        next();
+    });
+}
+
+app.use(xmlParser);
+
 app.use(bodyParser.json());
-app.use(bodyParser.text());
+
 app.use('/api/extract', ExtractController);
 
 
