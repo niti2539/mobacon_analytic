@@ -32,4 +32,4 @@ router.get('/:correlationid', (req: any, res) => {
 
 
 
-export const UsageController: Router = router;
+export const BillingsController: Router = router;

@@ -1,11 +1,25 @@
 import express from 'express';
+
+
 import bodyParser from 'body-parser';
 
 import { ExtractController } from './server/extract.controller';
-import { UsageController } from './server/usage.controller';
+import { BillingsController } from './server/billings.controller';
 
 
 const app: express.Application = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
+
+app.set('socketio', io);
+
+io.sockets.on("connection", (socket: any) => {
+    // Display a connected message
+    console.log("Server-Client Connected!");
+
+
+});
+
 const port: any = process.env.PORT || 3000;
 
 function xmlParser(req: any, res: any, next: any) {
@@ -25,9 +39,9 @@ app.use(xmlParser);
 app.use(bodyParser.json());
 
 app.use('/api/extract', ExtractController);
-app.use('/api/usage', UsageController);
+app.use('/api/billings', BillingsController);
 
 
-app.listen(port, () => {
+http.listen(port, () => {
     console.log(`Listening at http://localhost:${port}/`);
 });

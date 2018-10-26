@@ -143,6 +143,10 @@ router.post('/softbank/:correlationid', (req: any, res) => {
     });
     extract.discount = items;
 
+    const io = req.app.get('socketio');
+    io.emit('billing.new', extract);
+
+
     res.json(extract);
 });
 
