@@ -1,5 +1,5 @@
 import express from 'express';
-
+import "reflect-metadata";
 
 import bodyParser from 'body-parser';
 
