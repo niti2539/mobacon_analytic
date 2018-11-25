@@ -1,10 +1,12 @@
 
 import { Router, Request, Response } from 'express';
 import { findString } from './string-helper';
+import { Billing } from '../shared/billing';
+import { getManager } from 'typeorm';
 
 const router: Router = Router();
 
-router.post('/softbank/:correlationid', (req: any, res) => {
+router.post('/softbank/:correlationid', async (req: any, res) => {
 
     const correlationid = req.params.correlationid;
 
@@ -143,11 +145,27 @@ router.post('/softbank/:correlationid', (req: any, res) => {
     });
     extract.discount = items;
 
+
+
+    const billingRepo = getManager().getRepository(Billing);
+
+    let billing: any = {
+        userId: correlationid,
+        createdDate: new Date(),
+        data: extract
+    };
+
+    await billingRepo.save(billing);
+
+    let message: any = {
+        userId: correlationid,
+        billingUrl: `/api/billings/${billing.id}`,
+        createdDate: billing.createdDate
+    };
+
     const io = req.app.get('socketio');
-    io.emit('billing.new', extract);
-
-
-    res.json(extract);
+    io.emit('billing.new', message);
+    res.json(message);
 });
 
 router.post('/docomo/:correlationid', (req: any, res) => {

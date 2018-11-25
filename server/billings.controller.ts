@@ -1,33 +1,22 @@
 
 import { Router, Request, Response } from 'express';
+import { getManager } from 'typeorm';
+import { Billing } from '../shared/billing';
 
 const router: Router = Router();
 
-router.get('/:correlationid', (req: any, res) => {
-    res.json([
-        {
-            softbank: [
-                {
-                    key: '通話定額基本料［　８月２１日～　９月２０日］',
-                    value: 4200
-                }, {
-                    key: 'スマ放題　専用２年契約',
-                    value: -1500
-                }
-            ]
-        },
-        {
-            docomo: [
-                {
-                    key: '通話定額基本料［　８月２１日～　９月２０日］',
-                    value: 4200
-                }, {
-                    key: 'スマ放題　専用２年契約',
-                    value: -1500
-                }
-            ]
-        }
-    ]);
+router.get('/:id', async (req: any, res) => {
+
+    const billingRepo = getManager().getRepository(Billing);
+
+    try {
+        let billing = await billingRepo.findOne(req.params.id)
+        res.json(billing);
+    } catch (error) {
+        res.status(404).json({ error: `billing id: ${req.params.id} not found` });
+    }
+
+
 });
 
 

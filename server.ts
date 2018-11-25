@@ -1,13 +1,24 @@
 import express from 'express';
-import "reflect-metadata";
+import 'reflect-metadata';
 
 import bodyParser from 'body-parser';
 
 import { ExtractController } from './server/extract.controller';
 import { BillingsController } from './server/billings.controller';
-import { createConnection } from 'typeorm';
+import { createConnection, ConnectionOptions } from 'typeorm';
+import { Billing } from './shared/billing';
 
-createConnection().then(async connection => {
+let op: ConnectionOptions = {
+    type: 'mongodb',
+    url: process.env.MONGO_URI,
+    synchronize: true,
+    authSource: 'admin',
+    entities: [
+        Billing
+    ]
+};
+
+createConnection(op).then(async connection => {
 
     const app: express.Application = express();
     const http = require('http').Server(app);
@@ -15,9 +26,9 @@ createConnection().then(async connection => {
 
     app.set('socketio', io);
 
-    io.sockets.on("connection", (socket: any) => {
+    io.sockets.on('connection', (socket: any) => {
         // Display a connected message
-        console.log("Server-Client Connected!");
+        console.log('Server-Client Connected!');
     });
 
     const port: any = process.env.PORT || 3000;
@@ -46,4 +57,4 @@ createConnection().then(async connection => {
         console.log(`Listening at http://localhost:${port}/`);
     });
 
-}).catch(error => console.log("TypeORM connection error: ", error));
+}).catch(error => console.log('TypeORM connection error: ', error));

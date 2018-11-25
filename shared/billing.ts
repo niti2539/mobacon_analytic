@@ -1,4 +1,4 @@
-import { Entity, ObjectIdColumn, Column, ObjectID } from 'typeorm';
+import { Entity, ObjectIdColumn, Column, ObjectID, Index } from 'typeorm';
 
 @Entity()
 export class Billing {
@@ -7,13 +7,11 @@ export class Billing {
     id: ObjectID;
 
     @Column()
+    @Index()
     userId: string;
 
     @Column()
-    key: string;
-
-    @Column()
-    value: string;
+    data: any;
 
     @Column()
     createdDate: Date;
