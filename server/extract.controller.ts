@@ -179,5 +179,69 @@ router.post('/docomo/:correlationid', (req: any, res) => {
     res.json({ 'status': 'OK' });
 });
 
+router.post('/kddi/:correlationid', async (req: any, res) => {
+
+    const correlationid = req.params.correlationid;
+
+    const html: string = req.rawBody;
+
+    const extract: any = {};
+
+
+    // basic usage
+    const buContent = findString(html, '<h1>今月及び前月のデータ通信量</h1>', '<div class="leadSection');
+    let items: any = [];
+    let item: any = {};
+    let block: any = {};
+
+    buContent.split(/\n/).forEach(line => {
+
+        line = line.trim();
+        if (line.startsWith('<h4>')) {
+            block.date = findString(line, '<h4>', '</h4>');
+        }
+
+        // const key = /<td>(.*?)<\/td>/.exec(line);
+        // if (key)
+        //     item.key = key[1].trim();
+        // else {
+        //     let value = /<td(.*?)><span>(.*?)<\/span>/.exec(line);
+        //     if (value) {
+        //         item.value = value[2].trim();
+        //         items.push(item);
+        //         item = {};
+        //     } else {
+        //         value = /<td(.*?)>([+-]?\$?[1-9]\d?(?:,*\d{3})*(?:\.\d{2})?)/.exec(line);
+        //         if (value) {
+        //             item.value = value[2].trim();
+        //             items.push(item);
+        //             item = {};
+        //         }
+        //     }
+        // }
+    });
+    extract.basicUsage = items;
+
+    const billingRepo = getManager().getRepository(Billing);
+
+    let billing: any = {
+        userId: correlationid,
+        createdDate: new Date(),
+        data: extract
+    };
+
+    await billingRepo.save(billing);
+
+    let message: any = {
+        userId: correlationid,
+        billingUrl: `/api/billings/${billing.id}`,
+        createdDate: billing.createdDate
+    };
+
+    const io = req.app.get('socketio');
+    io.emit('billing.new', message);
+    res.json(message);
+});
+
 
 export const ExtractController: Router = router;
