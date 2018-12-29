@@ -191,35 +191,62 @@ router.post('/kddi/:correlationid', async (req: any, res) => {
     // basic usage
     const buContent = findString(html, '<h1>今月及び前月のデータ通信量</h1>', '<div class="leadSection');
     let items: any = [];
-    let item: any = {};
-    let block: any = {};
+    let item: any;
+    let block: any;
 
     buContent.split(/\n/).forEach(line => {
 
         line = line.trim();
         if (line.startsWith('<h4>')) {
+            if (block) {
+
+                if (item) {
+                    block.items.push(item);
+                    item = undefined;
+                }
+
+                items.push(block);
+            }
+
+            block = {};
             block.date = findString(line, '<h4>', '</h4>');
+            block.items = [];
+        } else {
+            if (line.startsWith('<div class="cell alignR">')) {
+                let val = findString(line, '<div class="cell alignR">', '</div>');
+                if (item.value)
+                    val += '|' + val;
+                else
+                    item.value = '';
+
+                item.value += val;
+
+            } else {
+                let key = findString(line, '<div class="cell item">', '</div>');
+                if (key) {
+
+                    if (item) {
+                        block.items.push(item);
+                        item = undefined;
+                    }
+
+                    if (!item) {
+                        item = {
+                            key: key
+                        };
+                    }
+                }
+            }
         }
 
-        // const key = /<td>(.*?)<\/td>/.exec(line);
-        // if (key)
-        //     item.key = key[1].trim();
-        // else {
-        //     let value = /<td(.*?)><span>(.*?)<\/span>/.exec(line);
-        //     if (value) {
-        //         item.value = value[2].trim();
-        //         items.push(item);
-        //         item = {};
-        //     } else {
-        //         value = /<td(.*?)>([+-]?\$?[1-9]\d?(?:,*\d{3})*(?:\.\d{2})?)/.exec(line);
-        //         if (value) {
-        //             item.value = value[2].trim();
-        //             items.push(item);
-        //             item = {};
-        //         }
-        //     }
-        // }
     });
+
+    if (item) {
+        block.items.push(item);
+    }
+
+    items.push(block);
+
     extract.basicUsage = items;
 
     const billingRepo = getManager().getRepository(Billing);
