@@ -13,12 +13,12 @@ services:
   mongo:
     image: mongo
     restart: always
-    #command: mongod --port 27117
+    command: mongod --port 27117
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: 1234
     ports:
-      - "27017:27017"
+      - "27117:27017"
     volumes: 
       - mongodbdata:/data/db
 
