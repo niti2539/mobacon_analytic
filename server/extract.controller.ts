@@ -3,6 +3,7 @@ import { Router, Request, Response } from 'express';
 import { findString } from './string-helper';
 import { Billing } from '../shared/billing';
 import { getManager } from 'typeorm';
+import { ymobile } from './ymobile.extract';
 
 const router: Router = Router();
 
@@ -270,5 +271,6 @@ router.post('/kddi/:correlationid', async (req: any, res) => {
     res.json(message);
 });
 
+router.post('/ymobile/:correlationid', ymobile);
 
 export const ExtractController: Router = router;
