@@ -3,94 +3,86 @@ import { Billing } from '../shared/billing';
 import { getManager } from 'typeorm';
 
 const au = async (req: any, res) => {
+  const correlationid = req.params.correlationid;
 
-    const correlationid = req.params.correlationid;
+  const html: string = req.rawBody;
 
-    const html: string = req.rawBody;
+  const extract: any = {};
 
-    const extract: any = {};
+  let seekPriceTable = false;
+  let priceTableMode = false;
 
+  let items: any = [];
+  let item: any = {};
+  let block;
 
-    // basic usage
-    const buContent = findString(html, '<h1>今月及び前月のデータ通信量</h1>', '<div class="leadSection');
-    let items: any = [];
-    let item: any;
-    let block: any;
+  html.split(/\n/).forEach(line => {
+    line = line.trim();
+    if (line.startsWith('<p class="detail-title">')) {
+      const title = findString(line, '<p class="detail-title">', '</p>');
+      if (title) {
+        if (seekPriceTable && priceTableMode) {
+          if (block) {
+            if (!items.find(i => i.date == block.date)) items.push(block);
+          }
 
-    buContent.split(/\n/).forEach(line => {
+          block = {};
+          block.date = title;
+          block.items = [];
 
-        line = line.trim();
-        if (line.startsWith('<h4>')) {
-            if (block) {
-
-                if (item) {
-                    block.items.push(item);
-                    item = undefined;
-                }
-
-                items.push(block);
-            }
-
-            block = {};
-            block.date = findString(line, '<h4>', '</h4>');
-            block.items = [];
+          seekPriceTable = false;
+          priceTableMode = false;
         } else {
-            if (line.startsWith('<div class="cell alignR">')) {
-                let val = findString(line, '<div class="cell alignR">', '</div>');
-                if (item.value)
-                    val += '|' + val;
-                else
-                    item.value = '';
-
-                item.value += val;
-
-            } else {
-                let key = findString(line, '<div class="cell item">', '</div>');
-                if (key) {
-
-                    if (item) {
-                        block.items.push(item);
-                        item = undefined;
-                    }
-
-                    if (!item) {
-                        item = {
-                            key: key
-                        };
-                    }
-                }
-            }
+          if (!block) {
+            block = {};
+            block.date = title;
+            block.items = [];
+          }
         }
 
-    });
-
-    if (item) {
-        block.items.push(item);
+        if (!seekPriceTable) seekPriceTable = true;
+        else priceTableMode = false;
+      }
     }
 
-    items.push(block);
+    if (seekPriceTable) {
+      if (line.startsWith('<table class="price-table"')) priceTableMode = true;
+    }
 
-    extract.basicUsage = items;
+    if (priceTableMode) {
+      const key = /<th>(.*?)<\/th>/.exec(line);
+      if (key) item.key = key[1].trim();
 
-    const billingRepo = getManager().getRepository(Billing);
+      let value = /<td>(.*?)<\/td>/.exec(line);
+      if (value) {
+        item.value = value[1].trim();
+        block.items.push(item);
+        item = {};
+      }
+    }
+  });
 
-    let billing: any = {
-        userId: correlationid,
-        createdDate: new Date(),
-        data: extract
-    };
+  extract.basicUsage = items;
 
-    await billingRepo.save(billing);
+  const billingRepo = getManager().getRepository(Billing);
 
-    let message: any = {
-        userId: correlationid,
-        billingUrl: `/api/billings/${billing.id}`,
-        createdDate: billing.createdDate
-    };
+  let billing: any = {
+    userId: correlationid,
+    createdDate: new Date(),
+    data: extract
+  };
 
-    const io = req.app.get('socketio');
-    io.emit('billing.new', message);
-    res.json(message);
-}
+  await billingRepo.save(billing);
+
+  let message: any = {
+    userId: correlationid,
+    billingUrl: `/api/billings/${billing.id}`,
+    createdDate: billing.createdDate
+  };
+
+  const io = req.app.get('socketio');
+  io.emit('billing.new', message);
+  res.json(message);
+};
 
 export { au };
