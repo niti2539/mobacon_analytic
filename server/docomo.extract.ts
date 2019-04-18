@@ -1,6 +1,6 @@
-import { findString } from "./string-helper";
-import { Billing } from "../shared/billing";
-import { getManager } from "typeorm";
+import { findString } from './string-helper';
+import { Billing } from '../shared/billing';
+import { getManager } from 'typeorm';
 
 const docomo = async (req: any, res) => {
   const correlationid = req.params.correlationid;
@@ -23,12 +23,22 @@ const docomo = async (req: any, res) => {
       block.date = title[2].trim();
       return;
     }
+
+    const total = /<span id="mydcm_payment_amount-09-02" class="card-t-number t-bold">(.*?)<\/span>/.exec(
+      line
+    );
+    if (total) {
+      item.key = '税込';
+      item.value = total[1].trim();
+      block.items.push(item);
+      item = {};
+    }
   });
 
   const paymentDetail = findString(
     html,
     '<div id="mydcm_payment_detail-02">',
-    "</body>"
+    '</body>'
   );
 
   paymentDetail.split(/\n/).forEach(line => {
@@ -74,8 +84,8 @@ const docomo = async (req: any, res) => {
     createdDate: billing.createdDate
   };
 
-  const io = req.app.get("socketio");
-  io.emit("billing.new", message);
+  const io = req.app.get('socketio');
+  io.emit('billing.new', message);
   res.json(message);
 };
 
